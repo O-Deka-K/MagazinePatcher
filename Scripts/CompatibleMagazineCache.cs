@@ -1,9 +1,5 @@
-﻿using Deli.Newtonsoft.Json;
-using FistVR;
-using System;
+﻿using FistVR;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace MagazinePatcher
 {
