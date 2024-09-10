@@ -14,6 +14,8 @@ This is a continuation of MagazinePatcher by devyndamonster, since Devyn has ret
 
 **Disable the original MagazinePatcher** and install this one instead. You don't need the original. Running both at the same time will cause problems.
 
+Yes, you _can_ copy **CachedCompatibleMags.json** from the original version if you want.
+
 ## Why should you use MagazinePatcher?
 - It allows modded weapons to spawn with magazines
 - It adds variety to magazine drops in TNH
