@@ -59,5 +59,4 @@ For step 1, you _can_ delete **CachedCompatibleMags.json** completely, but this 
 - Added logging options.
 
 ## Credits
-
 devyndamonster - For creating this mod and sharing it on GitHub
