@@ -10,7 +10,6 @@ namespace MagazinePatcher
         public List<string> Clips;
         public List<string> SpeedLoaders;
         public List<string> Bullets;
-        
 
         public Dictionary<string, MagazineCacheEntry> Entries;
         public Dictionary<string, AmmoObjectDataTemplate> AmmoObjects;
@@ -27,21 +26,21 @@ namespace MagazinePatcher
 
         public CompatibleMagazineCache()
         {
-            Firearms = new List<string>();
-            Magazines = new List<string>();
-            Clips = new List<string>();
-            SpeedLoaders = new List<string>();
-            Bullets = new List<string>();
+            Firearms = [];
+            Magazines = [];
+            Clips = [];
+            SpeedLoaders = [];
+            Bullets = [];
 
-            Entries = new Dictionary<string, MagazineCacheEntry>();
-            AmmoObjects = new Dictionary<string, AmmoObjectDataTemplate>();
+            Entries = [];
+            AmmoObjects = [];
 
-            MagazineData = new Dictionary<FireArmMagazineType, List<AmmoObjectDataTemplate>>();
-            ClipData = new Dictionary<FireArmClipType, List<AmmoObjectDataTemplate>>();
-            SpeedLoaderData = new Dictionary<FireArmRoundType, List<AmmoObjectDataTemplate>>();
-            BulletData = new Dictionary<FireArmRoundType, List<AmmoObjectDataTemplate>>();
+            MagazineData = [];
+            ClipData = [];
+            SpeedLoaderData = [];
+            BulletData = [];
 
-            BlacklistEntries = new Dictionary<string, MagazineBlacklistEntry>();
+            BlacklistEntries = [];
         }
 
 
@@ -49,7 +48,7 @@ namespace MagazinePatcher
         {
             if (!MagazineData.ContainsKey(mag.MagazineType))
             {
-                MagazineData.Add(mag.MagazineType, new List<AmmoObjectDataTemplate>());
+                MagazineData.Add(mag.MagazineType, []);
             }
             MagazineData[mag.MagazineType].Add(new AmmoObjectDataTemplate(mag));
 
@@ -63,7 +62,7 @@ namespace MagazinePatcher
         {
             if (!ClipData.ContainsKey(clip.ClipType))
             {
-                ClipData.Add(clip.ClipType, new List<AmmoObjectDataTemplate>());
+                ClipData.Add(clip.ClipType, []);
             }
             ClipData[clip.ClipType].Add(new AmmoObjectDataTemplate(clip));
 
@@ -77,7 +76,7 @@ namespace MagazinePatcher
         {
             if (!SpeedLoaderData.ContainsKey(speedloader.Chambers[0].Type))
             {
-                SpeedLoaderData.Add(speedloader.Chambers[0].Type, new List<AmmoObjectDataTemplate>());
+                SpeedLoaderData.Add(speedloader.Chambers[0].Type, []);
             }
             SpeedLoaderData[speedloader.Chambers[0].Type].Add(new AmmoObjectDataTemplate(speedloader));
 
@@ -91,7 +90,7 @@ namespace MagazinePatcher
         {
             if (!BulletData.ContainsKey(bullet.RoundType))
             {
-                BulletData.Add(bullet.RoundType, new List<AmmoObjectDataTemplate>());
+                BulletData.Add(bullet.RoundType, []);
             }
             BulletData[bullet.RoundType].Add(new AmmoObjectDataTemplate(bullet));
 
@@ -109,19 +108,17 @@ namespace MagazinePatcher
         public FireArmClipType ClipType;
         public FireArmRoundType BulletType;
         public bool DoesUseSpeedloader;
-        public List<string> CompatibleMagazines;
-        public List<string> CompatibleClips;
-        public List<string> CompatibleSpeedLoaders;
-        public List<string> CompatibleBullets;
-
-
+        public HashSet<string> CompatibleMagazines;
+        public HashSet<string> CompatibleClips;
+        public HashSet<string> CompatibleSpeedLoaders;
+        public HashSet<string> CompatibleBullets;
 
         public MagazineCacheEntry()
         {
-            CompatibleMagazines = new List<string>();
-            CompatibleClips = new List<string>();
-            CompatibleSpeedLoaders = new List<string>();
-            CompatibleBullets = new List<string>();
+            CompatibleMagazines = [];
+            CompatibleClips = [];
+            CompatibleSpeedLoaders = [];
+            CompatibleBullets = [];
         }
     }
 
@@ -172,14 +169,14 @@ namespace MagazinePatcher
     public class MagazineBlacklistEntry
     {
         public string FirearmID;
-        public List<string> MagazineBlacklist = new List<string>();
-        public List<string> MagazineWhitelist = new List<string>();
-        public List<string> ClipBlacklist = new List<string>();
-        public List<string> ClipWhitelist = new List<string>();
-        public List<string> SpeedLoaderBlacklist = new List<string>();
-        public List<string> SpeedLoaderWhitelist = new List<string>();
-        public List<string> RoundBlacklist = new List<string>();
-        public List<string> RoundWhitelist = new List<string>();
+        public List<string> MagazineBlacklist = [];
+        public List<string> MagazineWhitelist = [];
+        public List<string> ClipBlacklist = [];
+        public List<string> ClipWhitelist = [];
+        public List<string> SpeedLoaderBlacklist = [];
+        public List<string> SpeedLoaderWhitelist = [];
+        public List<string> RoundBlacklist = [];
+        public List<string> RoundWhitelist = [];
 
         public MagazineBlacklistEntry()
         {
@@ -192,7 +189,7 @@ namespace MagazinePatcher
 
         public bool IsMagazineAllowed(string itemID)
         {
-            if(MagazineWhitelist.Count > 0 && (!MagazineWhitelist.Contains(itemID))) return false;
+            if (MagazineWhitelist.Count > 0 && (!MagazineWhitelist.Contains(itemID))) return false;
 
             if (MagazineBlacklist.Contains(itemID)) return false;
 
