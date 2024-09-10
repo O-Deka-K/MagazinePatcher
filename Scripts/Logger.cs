@@ -6,11 +6,13 @@ namespace MagazinePatcher
     {
         public static ManualLogSource BepLog;
 
-        public static bool AllowLogging = true;
+        public static bool AllowLogging = false;
+        public static bool LogDebug = false;
 
         public enum LogType
         {
-            General
+            General,
+            Debug,
         }
 
         public static void Init()
@@ -23,6 +25,10 @@ namespace MagazinePatcher
             if (AllowLogging)
             {
                 if (type == LogType.General)
+                {
+                    BepLog.LogInfo(log);
+                }
+                else if (type == LogType.Debug && LogDebug)
                 {
                     BepLog.LogInfo(log);
                 }
