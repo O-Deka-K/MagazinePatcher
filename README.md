@@ -66,5 +66,8 @@ For step 1, you _can_ delete **CachedCompatibleMags.json** completely, but this 
 ### [0.2.2] - 2024-09-10 - Documentation Update
 - Previous changelog was incorrect. The manifest.json didn't have to be updated and it wasn't. The plugin itself had to tell BepInEx that it was the same name as the original version, `h3vr.magazinepatcher.deli`.
 
+### [0.2.3] - 2024-09-10 - Dependency Update
+- Removed Deli as a dependency.
+
 ## Credits
 devyndamonster - For creating this mod and sharing it on GitHub

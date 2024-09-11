@@ -14,7 +14,7 @@ using Valve.Newtonsoft.Json;
 
 namespace MagazinePatcher
 {
-    [BepInPlugin("h3vr.magazinepatcher.deli", "MagazinePatcher", "0.2.2")]
+    [BepInPlugin("h3vr.magazinepatcher.deli", "MagazinePatcher", "0.2.3")]
     [BepInDependency("h3vr.otherloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("nrgill28.Sodalite", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
