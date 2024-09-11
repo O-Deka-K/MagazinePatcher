@@ -60,5 +60,11 @@ For step 1, you _can_ delete **CachedCompatibleMags.json** completely, but this 
 - Updated to Stratum mod
 - Added logging options.
 
+### [0.2.1] - 2024-09-10 - Manifest Update
+- Updated manifest.json to say the author is devyndamonster. TakeAndHoldTweaker won't work without it. TNHFramework works fine with it.
+
+### [0.2.2] - 2024-09-10 - Documentation Update
+- Previous changelog was incorrect. The manifest.json didn't have to be updated and it wasn't. The plugin itself had to tell BepInEx that it was the same name as the original version, `h3vr.magazinepatcher.deli`.
+
 ## Credits
 devyndamonster - For creating this mod and sharing it on GitHub
