@@ -14,7 +14,7 @@ using Valve.Newtonsoft.Json;
 
 namespace MagazinePatcher
 {
-    [BepInPlugin("h3vr.magazinepatcher.deli", "MagazinePatcher", "0.2.3")]
+    [BepInPlugin("h3vr.magazinepatcher.deli", "MagazinePatcher", "0.2.4")]
     [BepInDependency("h3vr.otherloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("nrgill28.Sodalite", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
@@ -67,7 +67,7 @@ namespace MagazinePatcher
             BlacklistPath = Path.Combine(dirs.Data.FullName, "MagazineCacheBlacklist.json");
             PatchLogger.Log($"Blacklist path: {BlacklistPath}", PatchLogger.LogType.Debug);
 
-            StartCoroutine(RunAndCatch(LoadMagazineCacheAsync(), e => 
+            StartCoroutine(RunAndCatch(LoadMagazineCacheAsync(), e =>
             {
                 PatcherStatus.AppendCacheLog($"Something bad happened while caching item: {LastTouchedItem}");
                 PatcherStatus.CachingFailed = true;
@@ -646,7 +646,7 @@ namespace MagazinePatcher
                                 MinCapacityRelated = magazineObject.MagazineCapacity;
                         }
                     }
-                    
+
                     foreach (string clip in entry.CompatibleClips)
                     {
                         if (IM.OD.ContainsKey(clip) && (!firearm.CompatibleClips.Any(o => (o != null && o.ItemID == clip))))
@@ -666,27 +666,27 @@ namespace MagazinePatcher
                                 MinCapacityRelated = clipObject.MagazineCapacity;
                         }
                     }
-                    
+
                     foreach (string speedloader in entry.CompatibleSpeedLoaders)
                     {
                         if (IM.OD.ContainsKey(speedloader) && (!firearm.CompatibleSpeedLoaders.Any(o => (o != null && o.ItemID == speedloader))))
                         {
                             FVRObject speedloaderObject = IM.OD[speedloader];
                             firearm.CompatibleSpeedLoaders.Add(speedloaderObject);
-                            
+
                             if (magazineCache.AmmoObjects.ContainsKey(speedloader))
                                 speedloaderObject.MagazineCapacity = magazineCache.AmmoObjects[speedloader].Capacity;
 
                             if (MaxCapacityRelated < speedloaderObject.MagazineCapacity)
                                 MaxCapacityRelated = speedloaderObject.MagazineCapacity;
-                            
+
                             if (MinCapacityRelated == -1)
                                 MinCapacityRelated = speedloaderObject.MagazineCapacity;
                             else if (MinCapacityRelated > speedloaderObject.MagazineCapacity)
                                 MinCapacityRelated = speedloaderObject.MagazineCapacity;
                         }
                     }
-                    
+
                     foreach (string bullet in entry.CompatibleBullets)
                     {
                         if (IM.OD.ContainsKey(bullet) && (!firearm.CompatibleSingleRounds.Any(o => (o != null && o.ItemID == bullet))))
@@ -814,6 +814,5 @@ namespace MagazinePatcher
                 }
             }
         }
-
     }
 }
