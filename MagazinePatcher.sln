@@ -1,20 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31321.278
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35303.130
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MagazinePatcher", "MagazinePatcher.csproj", "{98995A27-DB6E-4095-AFCC-A831BF390698}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldMagazinePatcherDisabler", "OldMagazinePatcherDisabler\OldMagazinePatcherDisabler.csproj", "{4F728F32-4DEB-4870-BC9B-67FDD28DBFC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{98995A27-DB6E-4095-AFCC-A831BF390698}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{98995A27-DB6E-4095-AFCC-A831BF390698}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98995A27-DB6E-4095-AFCC-A831BF390698}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98995A27-DB6E-4095-AFCC-A831BF390698}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F728F32-4DEB-4870-BC9B-67FDD28DBFC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F728F32-4DEB-4870-BC9B-67FDD28DBFC4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
