@@ -12,9 +12,9 @@ This is not ideal, as some firearms can only spawn with one or two magazines, wh
 
 This is a continuation of MagazinePatcher by devyndamonster, since Devyn has retired from H3VR. It's meant to replace the original MagazinePatcher entirely. The code has been updated from Deli to Stratum, which fixes the bug where the TNH lobby gets stuck on "Caching Items".
 
-**Disable the original MagazinePatcher** and install this one instead. You don't need the original. Running both at the same time will cause problems.
+This mod now has a patcher that **disables the original MagazinePatcher** if you have it installed. It renames the DLL and manifest with the extension .bak. You can disable or uninstall the original MagazinePatcher in r2modman if you like.
 
-Yes, you _can_ copy **CachedCompatibleMags.json** from the original version if you want.
+Yes, you _can_ use **CachedCompatibleMags.json** from the original version if you want.
 
 ## Why should you use MagazinePatcher?
 - It allows modded weapons to spawn with magazines
@@ -33,26 +33,44 @@ Yes, you _can_ copy **CachedCompatibleMags.json** from the original version if y
 1. Install [r2modman](https://thunderstore.io/c/h3vr/p/ebkr/r2modman/) (mod manager) and set it up for H3VR.
 2. Install [Stratum](https://thunderstore.io/c/h3vr/p/Stratum/Stratum/) and any related dependencies using r2modman.
 3. Install [Otherloader](https://thunderstore.io/c/h3vr/p/devyndamonster/OtherLoader/) and any related dependencies using r2modman.
-4. **IMPORTANT:** If you have `devyndamonster-MagazinePatcher`, then disable it! In r2modman, press the button **Disable devyndamonster-MagazinePatcher only** after you click the disable switch.
-5. Download `ODekaK-MagazinePatcher-X.X.X.zip` and import as a local mod (Settings > Profile > Import local mod), or install it from Thunderstore if it's available.
+4. If you have `devyndamonster-MagazinePatcher`, then you can disable it. In r2modman, press the button "**Disable devyndamonster-MagazinePatcher only**" after you click the disable switch.
+5. Install [MagazinePatcher](https://thunderstore.io/c/h3vr/p/ODekaK/MagazinePatcher/) using r2modman, or download `ODekaK-MagazinePatcher-X.X.X.zip` and import as a local mod (Settings > Profile > Import local mod).
 
 ## Caching Tips
 
 This mod builds a cache of all firearms, magazines, clips, speedloaders and ammo. It saves it to a file so that it can be loaded every time you start the game. When you add new mods, they will be added to the cache. The cache is located in your r2modman profile under:
 
-`\H3VR\profiles\<profile_name>\BepInEx\plugins\ODekaK-MagazinePatcher\data\CachedCompatibleMags.json`
+`\H3VR\profiles\<profile_name>\BepInEx\cache\MagazinePatcher\CachedCompatibleMags.json`
 
 When you start H3VR for the first time after installing MagazinePatcher, it will build the cache. This takes some time. You can go to the TNH lobby and view the progress above the character selection screen.
 
-If you have a whole lot of mods, then the caching process can run out of memory and possibly crash the game. Mods like ModulAK and ModulAR are especially large. If this happens, then you can build the cache incrementally instead. Here's how:
+If you have a whole lot of mods, then the caching process can run out of memory and possibly crash the game. Mods like ModulAK and ModulAR are especially large. If this happens, then **try the XL Cache option below**.
 
-1. Make sure to start with the version of **CachedCompatibleMags.json** that comes with this mod. It has all of the vanilla items already loaded.
-2. In r2modman, disable at least half of your guns or other mods that contain items.
-3. Start a modded game, go to the TNH lobby, and wait for it to cache.
-4. If it succeeds, then close the game, enable more mods, and repeat from step 3 until done. You do NOT need to disable mods that are already done.
-5. If it fails, the close the game, disable more mods, and repeat from step 3.
+If that doesn't work for you for some reason, then you can build the cache incrementally. Here's how:
+
+1. In r2modman, disable at least half of your guns or other mods that contain items.
+2. Start a modded game, go to the TNH lobby, and wait for it to cache.
+3. If it succeeds, then close the game, enable more mods, and repeat from step 2 until done. You do NOT need to disable mods that are already done.
+4. If it fails, the close the game, disable more mods, and repeat from step 2.
+5. If the game is chugging when it's done, then you should restart H3VR one more time.
  
-For step 1, you _can_ delete **CachedCompatibleMags.json** completely, but this make may things worse, as it has more items to load. If you need to delete it, then I recommend disabling ALL of your mods, except for the ones needed for MagazinePatcher itself. Run it once to cache all of the vanilla items before enabling mods. **Note:** Do NOT "Start vanilla", as MagazinePatcher won't run at all.
+## New Features/Options
+
+From outside of H3VR, you can go to r2modman Config Editor > `BepInEx\config\h3vr.magazinepatcher.cfg` to edit these.
+
+From within H3VR, you can go to wrist menu > Custom Buttons > Spawn Mod Panel > Plugins > MagazinePatcher.
+
+The following three options are mutually exclusive, meaning that only one can be applied at a time.
+
+**Reset to Basic Cache on Next Start:** This option resets the cache from a basic starting cache on the next start on H3VR. MagazinePatcher will then cache any items that are missing from it. This setting will always be set back to false after startup.
+
+**Reset to XL Cache on Next Start:** Experimental. This option resets the cache from the XL starting cache on the next start of H3VR. This is a large cache made from many available mods. This setting will always be set back to false after startup.
+
+**Delete Cache on Next Start:** Nuclear option. This option deletes the cache on the next start of H3VR. The cache will be built from scratch. This takes the most time and the most RAM to finish. This setting will always be set back to false after startup.
+
+The starting cache is used as a starting point on the first run of MagazinePatcher. MagazinePatcher will cache items from any mods that are not currently in the cache. It will update whenever you add new mods, and items will never be removed from it unless you reset it or delete it.
+
+The default starting cache currently has all of the vanilla items from Update 113. The XL starting cache was donated by **42nfl19** and includes items from a lot of mods!
 
 ## Changelog
 
@@ -64,10 +82,20 @@ For step 1, you _can_ delete **CachedCompatibleMags.json** completely, but this 
 - Updated manifest.json to say the author is devyndamonster. TakeAndHoldTweaker won't work without it. TNHFramework works fine with it.
 
 ### [0.2.2] - 2024-09-10 - Documentation Update
-- Previous changelog was incorrect. The manifest.json didn't have to be updated and it wasn't. The plugin itself had to tell BepInEx that it was the same name as the original version, `h3vr.magazinepatcher.deli`.
+- Previous changelog was incorrect. The manifest.json didn't have to be updated and it wasn't. The plugin itself had to tell BepInEx that it was the same name as the original version.
 
 ### [0.2.3] - 2024-09-10 - Dependency Update
 - Removed Deli as a dependency.
 
+### [0.2.4] - 2024-09-10 - Structure Update
+- Had to move files around. I thought I had tested it and it was working, but apparently not. Sorry for any trouble.
+
+### [0.3.0] - 2024-09-13 - Cache Options Update
+- Moved cache from plugin directory to BepInEx cache directory (see above for location). This prevents the cache from being deleted whenever this mod is updated.
+- Added options to reset cache to basic or XL starting cache, or to delete it entirely.
+- Added OldMagazinePatcherDisabler. This disables the original version of MagazinePatcher if you have it enabled.
+
 ## Credits
 devyndamonster - For creating this mod and sharing it on GitHub
+
+42nfl19 - For donating the XL starting cache
