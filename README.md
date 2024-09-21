@@ -95,7 +95,12 @@ The default starting cache currently has all of the vanilla items from Update 11
 - Added options to reset cache to basic or XL starting cache, or to delete it entirely.
 - Added OldMagazinePatcherDisabler. This disables the original version of MagazinePatcher if you have it enabled.
 
+### [0.3.1] - 2024-09-14 - Credits Update
+- Added credit to APintOfGravy
+
 ## Credits
 devyndamonster - For creating this mod and sharing it on GitHub
+
+APintOfGravy - For the OldTweakerDisabler code, which the OldMagazinePatcherDisabler is based on, and for the techinique of impersonating the old MagazinePatcher so that TNHTweaker doesn't have a tantrum.
 
 42nfl19 - For donating the XL starting cache
