@@ -13,7 +13,7 @@ using Valve.Newtonsoft.Json;
 
 namespace MagazinePatcher
 {
-    [BepInPlugin("h3vr.magazinepatcher", "MagazinePatcher", "0.3.1")]
+    [BepInPlugin("h3vr.magazinepatcher", "MagazinePatcher", "0.3.2")]
     [BepInDependency("h3vr.otherloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("nrgill28.Sodalite", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
@@ -558,7 +558,7 @@ namespace MagazinePatcher
 
                     LastTouchedItem = entry.FirearmID;
 
-                    if (CompatibleMagazineCache.Instance.MagazineData.ContainsKey(entry.MagType))
+                    if (entry.MagType != FireArmMagazineType.mNone && CompatibleMagazineCache.Instance.MagazineData.ContainsKey(entry.MagType))
                     {
                         foreach (AmmoObjectDataTemplate magazine in CompatibleMagazineCache.Instance.MagazineData[entry.MagType])
                         {
@@ -566,7 +566,7 @@ namespace MagazinePatcher
                         }
                     }
 
-                    if (CompatibleMagazineCache.Instance.ClipData.ContainsKey(entry.ClipType))
+                    if (entry.ClipType != FireArmClipType.None && CompatibleMagazineCache.Instance.ClipData.ContainsKey(entry.ClipType))
                     {
                         foreach (AmmoObjectDataTemplate clip in CompatibleMagazineCache.Instance.ClipData[entry.ClipType])
                         {
@@ -749,43 +749,49 @@ namespace MagazinePatcher
                     int MaxCapacityRelated = -1;
                     int MinCapacityRelated = -1;
 
-                    foreach (string mag in entry.CompatibleMagazines)
+                    if (entry.MagType != FireArmMagazineType.mNone)
                     {
-                        if (IM.OD.ContainsKey(mag) && (!firearm.CompatibleMagazines.Any(o => (o != null && o.ItemID == mag))))
+                        foreach (string mag in entry.CompatibleMagazines)
                         {
-                            FVRObject magazineObject = IM.OD[mag];
-                            firearm.CompatibleMagazines.Add(magazineObject);
+                            if (IM.OD.ContainsKey(mag) && (!firearm.CompatibleMagazines.Any(o => (o != null && o.ItemID == mag))))
+                            {
+                                FVRObject magazineObject = IM.OD[mag];
+                                firearm.CompatibleMagazines.Add(magazineObject);
 
-                            if (magazineCache.AmmoObjects.ContainsKey(mag))
-                                magazineObject.MagazineCapacity = magazineCache.AmmoObjects[mag].Capacity;
+                                if (magazineCache.AmmoObjects.ContainsKey(mag))
+                                    magazineObject.MagazineCapacity = magazineCache.AmmoObjects[mag].Capacity;
 
-                            if (MaxCapacityRelated < magazineObject.MagazineCapacity)
-                                MaxCapacityRelated = magazineObject.MagazineCapacity;
+                                if (MaxCapacityRelated < magazineObject.MagazineCapacity)
+                                    MaxCapacityRelated = magazineObject.MagazineCapacity;
 
-                            if (MinCapacityRelated == -1)
-                                MinCapacityRelated = magazineObject.MagazineCapacity;
-                            else if (MinCapacityRelated > magazineObject.MagazineCapacity)
-                                MinCapacityRelated = magazineObject.MagazineCapacity;
+                                if (MinCapacityRelated == -1)
+                                    MinCapacityRelated = magazineObject.MagazineCapacity;
+                                else if (MinCapacityRelated > magazineObject.MagazineCapacity)
+                                    MinCapacityRelated = magazineObject.MagazineCapacity;
+                            }
                         }
                     }
 
-                    foreach (string clip in entry.CompatibleClips)
+                    if (entry.ClipType != FireArmClipType.None)
                     {
-                        if (IM.OD.ContainsKey(clip) && (!firearm.CompatibleClips.Any(o => (o != null && o.ItemID == clip))))
+                        foreach (string clip in entry.CompatibleClips)
                         {
-                            FVRObject clipObject = IM.OD[clip];
-                            firearm.CompatibleClips.Add(clipObject);
+                            if (IM.OD.ContainsKey(clip) && (!firearm.CompatibleClips.Any(o => (o != null && o.ItemID == clip))))
+                            {
+                                FVRObject clipObject = IM.OD[clip];
+                                firearm.CompatibleClips.Add(clipObject);
 
-                            if (magazineCache.AmmoObjects.ContainsKey(clip))
-                                clipObject.MagazineCapacity = magazineCache.AmmoObjects[clip].Capacity;
+                                if (magazineCache.AmmoObjects.ContainsKey(clip))
+                                    clipObject.MagazineCapacity = magazineCache.AmmoObjects[clip].Capacity;
 
-                            if (MaxCapacityRelated < clipObject.MagazineCapacity)
-                                MaxCapacityRelated = clipObject.MagazineCapacity;
+                                if (MaxCapacityRelated < clipObject.MagazineCapacity)
+                                    MaxCapacityRelated = clipObject.MagazineCapacity;
 
-                            if (MinCapacityRelated == -1)
-                                MinCapacityRelated = clipObject.MagazineCapacity;
-                            else if (MinCapacityRelated > clipObject.MagazineCapacity)
-                                MinCapacityRelated = clipObject.MagazineCapacity;
+                                if (MinCapacityRelated == -1)
+                                    MinCapacityRelated = clipObject.MagazineCapacity;
+                                else if (MinCapacityRelated > clipObject.MagazineCapacity)
+                                    MinCapacityRelated = clipObject.MagazineCapacity;
+                            }
                         }
                     }
 
