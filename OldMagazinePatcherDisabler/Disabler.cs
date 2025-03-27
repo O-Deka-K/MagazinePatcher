@@ -82,19 +82,73 @@ namespace OldMagazinePatcherDisabler
                         }
                     }
 
-                    // Original MagazinePatcher is enabled, so rename it with .bak
+                    // Original MagazinePatcher was disabled after renaming it to .bak, so rename it to just .old
+                    if (File.Exists(originalDllPath + ".bak.old"))
+                    {
+                        if (File.Exists(originalDllPath))
+                            File.Delete(originalDllPath);
+
+                        if (File.Exists(originalDllPath + ".old"))
+                            File.Delete(originalDllPath + ".old");
+
+                        File.Move(originalDllPath + ".bak.old", originalDllPath + ".old");
+
+                        Logger.LogInfo("Disabled original MagazinePatcher install. Re-enable it via disabling and enabling it in r2modman. Also, disable new MagazinePatcher or it will take over again.");
+                    }
+
+                    if (File.Exists(originalManifestPath + ".bak.old"))
+                    {
+                        if (File.Exists(originalManifestPath))
+                            File.Delete(originalManifestPath);
+
+                        if (File.Exists(originalManifestPath + ".old"))
+                            File.Delete(originalManifestPath + ".old");
+
+                        File.Move(originalManifestPath + ".bak.old", originalManifestPath + ".old");
+                    }
+
+                    // Original MagazinePatcher was renamed to .bak, so rename it to .old
+                    if (File.Exists(originalDllPath + ".bak"))
+                    {
+                        if (File.Exists(originalDllPath))
+                            File.Delete(originalDllPath);
+
+                        if (File.Exists(originalDllPath + ".old"))
+                            File.Delete(originalDllPath + ".old");
+
+                        File.Move(originalDllPath + ".bak", originalDllPath + ".old");
+
+                        Logger.LogInfo("Disabled original MagazinePatcher install. Re-enable it via disabling and enabling it in r2modman. Also, disable new MagazinePatcher or it will take over again.");
+                    }
+
+                    if (File.Exists(originalManifestPath + ".bak"))
+                    {
+                        if (File.Exists(originalManifestPath))
+                            File.Delete(originalManifestPath);
+
+                        if (File.Exists(originalManifestPath + ".old"))
+                            File.Delete(originalManifestPath + ".old");
+
+                        File.Move(originalManifestPath + ".bak", originalManifestPath + ".old");
+                    }
+
+                    // Original MagazinePatcher is enabled, so rename it to .old
                     if (File.Exists(originalDllPath))
                     {
-                        if (File.Exists(originalDllPath + ".bak"))
-                            File.Delete(originalDllPath + ".bak");
+                        if (File.Exists(originalDllPath + ".old"))
+                            File.Delete(originalDllPath + ".old");
 
-                        if (File.Exists(originalManifestPath + ".bak"))
-                            File.Delete(originalManifestPath + ".bak");
+                        File.Move(originalDllPath, originalDllPath + ".old");
 
-                        File.Move(originalDllPath, originalDllPath + ".bak");
-                        File.Move(originalManifestPath, originalManifestPath + ".bak");
+                        Logger.LogInfo("Disabled original MagazinePatcher install. Re-enable it via disabling and enabling it in r2modman. Also, disable new MagazinePatcher or it will take over again.");
+                    }
 
-                        Logger.LogInfo("Disabled original MagazinePatcher install. Re-enable it via reinstalling or renaming the DLL. Will break compatibility with new MagazinePatcher.");
+                    if (File.Exists(originalManifestPath))
+                    {
+                        if (File.Exists(originalManifestPath + ".old"))
+                            File.Delete(originalManifestPath + ".old");
+
+                        File.Move(originalManifestPath, originalManifestPath + ".old");
                     }
 
                     break;

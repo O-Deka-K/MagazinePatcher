@@ -72,32 +72,6 @@ The starting cache is used as a starting point on the first run of MagazinePatch
 
 The default starting cache currently has all of the vanilla items from Update 113. The XL starting cache was donated by **42nfl19** and includes items from a lot of mods!
 
-## Changelog
-
-### [0.2.0] - 2024-09-10 - Stratum Update
-- Updated to Stratum mod
-- Added logging options.
-
-### [0.2.1] - 2024-09-10 - Manifest Update
-- Updated manifest.json to say the author is devyndamonster. TakeAndHoldTweaker won't work without it. TNHFramework works fine with it.
-
-### [0.2.2] - 2024-09-10 - Documentation Update
-- Previous changelog was incorrect. The manifest.json didn't have to be updated and it wasn't. The plugin itself had to tell BepInEx that it was the same name as the original version.
-
-### [0.2.3] - 2024-09-10 - Dependency Update
-- Removed Deli as a dependency.
-
-### [0.2.4] - 2024-09-10 - Structure Update
-- Had to move files around. I thought I had tested it and it was working, but apparently not. Sorry for any trouble.
-
-### [0.3.0] - 2024-09-13 - Cache Options Update
-- Moved cache from plugin directory to BepInEx cache directory (see above for location). This prevents the cache from being deleted whenever this mod is updated.
-- Added options to reset cache to basic or XL starting cache, or to delete it entirely.
-- Added OldMagazinePatcherDisabler. This disables the original version of MagazinePatcher if you have it enabled.
-
-### [0.3.1] - 2024-09-14 - Credits Update
-- Added credit to APintOfGravy
-
 ## Credits
 devyndamonster - For creating this mod and sharing it on GitHub
 

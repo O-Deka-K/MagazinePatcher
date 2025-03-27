@@ -13,7 +13,7 @@ using Valve.Newtonsoft.Json;
 
 namespace MagazinePatcher
 {
-    [BepInPlugin("h3vr.magazinepatcher", "MagazinePatcher", "0.3.2")]
+    [BepInPlugin("h3vr.magazinepatcher", "MagazinePatcher", "0.3.3")]
     [BepInDependency("h3vr.otherloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("nrgill28.Sodalite", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
@@ -29,6 +29,9 @@ namespace MagazinePatcher
         private static string BasicCachePath;
         private static string XLCachePath;
         private static string LastTouchedItem;
+
+        // This is an arbitrary number. If it ever gets used for an ammo type (modded or not), then change this to something else that's unused.
+        private static readonly FireArmRoundType InvalidRoundType = (FireArmRoundType)(-1);
 
         private void Awake()
         {
@@ -316,7 +319,8 @@ namespace MagazinePatcher
                             if (magComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {magazine.ItemID}");
-                                continue;
+                                magComp.ObjectWrapper = magazine;
+                                //continue;
                             }
 
                             CompatibleMagazineCache.Instance.AddMagazineData(magComp);
@@ -362,7 +366,8 @@ namespace MagazinePatcher
                             if (clipComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {clip.ItemID}");
-                                continue;
+                                clipComp.ObjectWrapper = clip;
+                                //continue;
                             }
 
                             CompatibleMagazineCache.Instance.AddClipData(clipComp);
@@ -407,7 +412,8 @@ namespace MagazinePatcher
                             if (speedloaderComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {speedloader.ItemID}");
-                                continue;
+                                speedloaderComp.ObjectWrapper = speedloader;
+                                //continue;
                             }
 
                             CompatibleMagazineCache.Instance.AddSpeedLoaderData(speedloaderComp);
@@ -454,7 +460,8 @@ namespace MagazinePatcher
                             if (bulletComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {bullet.ItemID}");
-                                continue;
+                                bulletComp.ObjectWrapper = bullet;
+                                //continue;
                             }
 
                             CompatibleMagazineCache.Instance.AddBulletData(bulletComp);
@@ -511,14 +518,8 @@ namespace MagazinePatcher
                             if (firearmComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {firearm.ItemID}");
-                                continue;
-                            }
-
-                            // If it's mostly zeroes, skip it, otherwise stuff like the Graviton Beamer gets .22LR ammo
-                            if (!ValidFireArm(firearmComp.RoundType, firearmComp.ClipType, firearmComp.MagazineType, firearm.MagazineCapacity))
-                            {
-                                PatchLogger.Log($"Firearm {firearm.DisplayName} skipped!", PatchLogger.LogType.Debug);
-                                continue;
+                                firearmComp.ObjectWrapper = firearm;
+                                //continue;
                             }
 
                             MagazineCacheEntry entry = new()
@@ -528,6 +529,14 @@ namespace MagazinePatcher
                                 ClipType = firearmComp.ClipType,
                                 BulletType = firearmComp.RoundType
                             };
+
+                            // If it's mostly zeroes, set the round type to invalid, otherwise stuff like the Graviton Beamer gets .22LR ammo.
+                            // Unfortunately, Anton didn't create a "FireArmRoundType.None", so we have to make one up.
+                            if (!ValidFireArm(firearmComp.RoundType, firearmComp.ClipType, firearmComp.MagazineType, firearm.MagazineCapacity))
+                            {
+                                PatchLogger.Log($"Firearm {firearm.DisplayName} being set to round type {InvalidRoundType}!", PatchLogger.LogType.Debug);
+                                entry.BulletType = InvalidRoundType;
+                            }
 
                             // Extra part that handles revolver capacity for speedloader compatibility
                             Revolver revolverComp = firearmComp.gameObject.GetComponent<Revolver>();
@@ -879,13 +888,16 @@ namespace MagazinePatcher
         {
             bool cacheValid = true;
 
-            // NOTE: You could return false immediately in here, but we don't for the sake of debugging
             foreach (string mag in IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Select(f => f.ItemID))
             {
                 if (!magazineCache.Magazines.Contains(mag))
                 {
-                    PatchLogger.LogWarning($"Magazine not found in cache: {mag}");
-                    cacheValid = false;
+                    if (cacheValid && IM.OD[mag].GetGameObject() != null)
+                    {
+                        PatchLogger.LogWarning($"Magazine not found in cache: {mag}");
+                        cacheValid = false;
+                        // NOTE: You could return false immediately in here, but we don't for the sake of debugging
+                    }
                 }
             }
 
@@ -893,8 +905,11 @@ namespace MagazinePatcher
             {
                 if (!magazineCache.Firearms.Contains(firearm))
                 {
-                    PatchLogger.LogWarning($"Firearm not found in cache: {firearm}");
-                    cacheValid = false;
+                    if (cacheValid && IM.OD[firearm].GetGameObject() != null)
+                    {
+                        PatchLogger.LogWarning($"Firearm not found in cache: {firearm}");
+                        cacheValid = false;
+                    }
                 }
             }
 
@@ -902,8 +917,11 @@ namespace MagazinePatcher
             {
                 if (!magazineCache.Clips.Contains(clip))
                 {
-                    PatchLogger.LogWarning($"Clip not found in cache: {clip}");
-                    cacheValid = false;
+                    if (cacheValid && IM.OD[clip].GetGameObject() != null)
+                    {
+                        PatchLogger.LogWarning($"Clip not found in cache: {clip}");
+                        cacheValid = false;
+                    }
                 }
             }
 
@@ -911,8 +929,11 @@ namespace MagazinePatcher
             {
                 if (!magazineCache.Bullets.Contains(bullet))
                 {
-                    PatchLogger.LogWarning($"Bullet not found in cache: {bullet}");
-                    cacheValid = false;
+                    if (cacheValid && IM.OD[bullet].GetGameObject() != null)
+                    {
+                        PatchLogger.LogWarning($"Bullet not found in cache: {bullet}");
+                        cacheValid = false;
+                    }
                 }
             }
 
