@@ -26,7 +26,7 @@
 ### [0.3.2] - 2024-11-08 - MagazineType/ClipType Fix
 - Disallow MagazineType 0 and ClipType 0. This fixes things like ammo boxes from mods being spawned with guns.
 
-### [0.3.3] - 2025-03-26 - Tweaks and Blacklist Additions
+### [0.3.3] - 2025-03-26 - Caching Tweaks and Blacklist Additions
 - If an item is missing an ObjectWrapper value, assign it rather than skip it.
 - Patch firearms that don't have any ammo (e.g. Graviton Beamer) so that .22 LR ammo doesn't spawn with it.
 - Don't invalidate the cache if an item is missing from the cache, but the item is bugged and can't be loaded.
