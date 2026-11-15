@@ -261,6 +261,7 @@ namespace MagazinePatcher
             PatcherStatus.AppendCacheLog("Checking Cache");
 
             bool isCacheValid = LoadFullCache();
+            isCacheValid = false; // TODO remove
 
             CompatibleMagazineCache.BlacklistEntries = GetMagazineCacheBlacklist();
 
@@ -284,7 +285,6 @@ namespace MagazinePatcher
                 PatchLogger.Log("Loading all magazines", PatchLogger.LogType.General);
                 PatcherStatus.AppendCacheLog("Caching Magazines");
 
-                AnvilCallback<GameObject> gameObjectCallback;
                 DateTime start = DateTime.Now;
 
                 foreach (FVRObject magazine in magazines)
@@ -303,27 +303,28 @@ namespace MagazinePatcher
                     // If this magazine isn't cached, then we should store its data
                     if (!CompatibleMagazineCache.Instance.Magazines.Contains(magazine.ItemID))
                     {
-                        gameObjectCallback = magazine.GetGameObjectAsync();
+                        var gameObjectCallback = magazine.GetGameObjectAsync()!;
                         yield return gameObjectCallback;
 
-                        if (magazine.GetGameObject() == null)
+                        var result = gameObjectCallback.Result;
+                        if (result == null)
                         {
                             PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {magazine.ItemID}");
                             continue;
                         }
 
-                        FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
-
+                        var magComp = result.GetComponent<FVRFireArmMagazine>();
                         if (magComp != null)
                         {
                             if (magComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {magazine.ItemID}");
-                                magComp.ObjectWrapper = magazine;
+                                //magComp.ObjectWrapper = magazine;
                                 //continue;
                             }
 
                             CompatibleMagazineCache.Instance.AddMagazineData(magComp);
+                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(magazine.ItemID);
                         }
 
                         CompatibleMagazineCache.Instance.Magazines.Add(magazine.ItemID);
@@ -350,27 +351,28 @@ namespace MagazinePatcher
                     // If this clip isn't cached, then we should store its data
                     if (!CompatibleMagazineCache.Instance.Clips.Contains(clip.ItemID))
                     {
-                        gameObjectCallback = clip.GetGameObjectAsync();
+                        var gameObjectCallback = clip.GetGameObjectAsync()!;
                         yield return gameObjectCallback;
 
-                        if (clip.GetGameObject() == null)
+                        var result = gameObjectCallback.Result;
+                        if (result == null)
                         {
                             PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {clip.ItemID}");
                             continue;
                         }
 
-                        FVRFireArmClip clipComp = clip.GetGameObject().GetComponent<FVRFireArmClip>();
-
+                        var clipComp = result.GetComponent<FVRFireArmClip>();
                         if (clipComp != null)
                         {
                             if (clipComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {clip.ItemID}");
-                                clipComp.ObjectWrapper = clip;
+                                //clipComp.ObjectWrapper = clip;
                                 //continue;
                             }
 
                             CompatibleMagazineCache.Instance.AddClipData(clipComp);
+                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(clip.ItemID);
                         }
 
                         CompatibleMagazineCache.Instance.Clips.Add(clip.ItemID);
@@ -397,26 +399,28 @@ namespace MagazinePatcher
                     // If this speedloader isn't cached, then we should store its data
                     if (!CompatibleMagazineCache.Instance.SpeedLoaders.Contains(speedloader.ItemID))
                     {
-                        gameObjectCallback = speedloader.GetGameObjectAsync();
+                        var gameObjectCallback = speedloader.GetGameObjectAsync()!;
                         yield return gameObjectCallback;
 
-                        if (speedloader.GetGameObject() == null)
+                        var result = gameObjectCallback.Result;
+                        if (result == null)
                         {
                             PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {speedloader.ItemID}");
                             continue;
                         }
 
-                        Speedloader speedloaderComp = speedloader.GetGameObject().GetComponent<Speedloader>();
+                        var speedloaderComp = result.GetComponent<Speedloader>();
                         if (speedloaderComp != null)
                         {
                             if (speedloaderComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {speedloader.ItemID}");
-                                speedloaderComp.ObjectWrapper = speedloader;
+                                //speedloaderComp.ObjectWrapper = speedloader;
                                 //continue;
                             }
 
                             CompatibleMagazineCache.Instance.AddSpeedLoaderData(speedloaderComp);
+                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(speedloader.ItemID);
                         }
 
                         CompatibleMagazineCache.Instance.SpeedLoaders.Add(speedloader.ItemID);
@@ -443,28 +447,28 @@ namespace MagazinePatcher
                     // If this bullet isn't cached, then we should store its data
                     if (!CompatibleMagazineCache.Instance.Bullets.Contains(bullet.ItemID))
                     {
-                        gameObjectCallback = bullet.GetGameObjectAsync();
+                        var gameObjectCallback = bullet.GetGameObjectAsync()!;
                         yield return gameObjectCallback;
 
-                        if (bullet.GetGameObject() == null)
+                        var result = gameObjectCallback.Result;
+                        if (result == null)
                         {
                             PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {bullet.ItemID}");
                             continue;
                         }
 
-
-                        FVRFireArmRound bulletComp = bullet.GetGameObject().GetComponent<FVRFireArmRound>();
-
+                        var bulletComp = result.GetComponent<FVRFireArmRound>();
                         if (bulletComp != null)
                         {
                             if (bulletComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {bullet.ItemID}");
-                                bulletComp.ObjectWrapper = bullet;
+                                //bulletComp.ObjectWrapper = bullet;
                                 //continue;
                             }
 
                             CompatibleMagazineCache.Instance.AddBulletData(bulletComp);
+                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(bullet.ItemID);
                         }
 
                         CompatibleMagazineCache.Instance.Bullets.Add(bullet.ItemID);
@@ -502,23 +506,24 @@ namespace MagazinePatcher
                             continue;
                         }
 
-                        gameObjectCallback = firearm.GetGameObjectAsync();
+                        var gameObjectCallback = firearm.GetGameObjectAsync()!;
                         yield return gameObjectCallback;
 
-                        if (firearm.GetGameObject() == null)
+                        var result = gameObjectCallback.Result;
+                        if (result == null)
                         {
                             PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {firearm.ItemID}");
                             continue;
                         }
 
                         // If this firearm is valid, then we create a magazine cache entry for it
-                        FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
+                        var firearmComp = result.GetComponent<FVRFireArm>();
                         if (firearmComp != null)
                         {
                             if (firearmComp.ObjectWrapper == null)
                             {
                                 PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {firearm.ItemID}");
-                                firearmComp.ObjectWrapper = firearm;
+                                //firearmComp.ObjectWrapper = firearm;
                                 //continue;
                             }
 
@@ -547,6 +552,7 @@ namespace MagazinePatcher
                             }
 
                             CompatibleMagazineCache.Instance.Entries.Add(firearm.ItemID, entry);
+                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(firearm.ItemID);
                         }
 
                         CompatibleMagazineCache.Instance.Firearms.Add(firearm.ItemID);
@@ -615,12 +621,13 @@ namespace MagazinePatcher
                 PatchLogger.Log($"[{DateTime.Now:HH:mm:ss}] Caching finished!", PatchLogger.LogType.General);
             }
 
-            PatchLogger.Log("Applying magazine cache to firearms", PatchLogger.LogType.General);
+            PatchLogger.Log("Applying magazine cache to firearms...", PatchLogger.LogType.General);
 
             ApplyMagazineCache(CompatibleMagazineCache.Instance);
             RemoveBlacklistedMagazines(CompatibleMagazineCache.BlacklistEntries);
 
             PatcherStatus.UpdateProgress(1);
+            PatchLogger.Log($"[{DateTime.Now:HH:mm:ss}] Completed!", PatchLogger.LogType.General);
         }
 
         private static bool CheckBackupCache()
