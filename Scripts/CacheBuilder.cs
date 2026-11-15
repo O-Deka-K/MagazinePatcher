@@ -127,7 +127,7 @@ internal static class CacheBuilder
                     {
                         PatchLogger.LogWarning(
                             $"Object was found to have no ObjectWrapper assigned! ItemID: {magazine.ItemID}");
-                        //magComp.ObjectWrapper = magazine;
+                        magComp.ObjectWrapper = magazine;
                         //continue;
                     }
 
@@ -175,7 +175,7 @@ internal static class CacheBuilder
                     {
                         PatchLogger.LogWarning(
                             $"Object was found to have no ObjectWrapper assigned! ItemID: {clip.ItemID}");
-                        //clipComp.ObjectWrapper = clip;
+                        clipComp.ObjectWrapper = clip;
                         //continue;
                     }
 
@@ -223,7 +223,7 @@ internal static class CacheBuilder
                     {
                         PatchLogger.LogWarning(
                             $"Object was found to have no ObjectWrapper assigned! ItemID: {speedloader.ItemID}");
-                        //speedloaderComp.ObjectWrapper = speedloader;
+                        speedloaderComp.ObjectWrapper = speedloader;
                         //continue;
                     }
 
@@ -271,7 +271,7 @@ internal static class CacheBuilder
                     {
                         PatchLogger.LogWarning(
                             $"Object was found to have no ObjectWrapper assigned! ItemID: {bullet.ItemID}");
-                        //bulletComp.ObjectWrapper = bullet;
+                        bulletComp.ObjectWrapper = bullet;
                         //continue;
                     }
 
@@ -331,7 +331,7 @@ internal static class CacheBuilder
                     {
                         PatchLogger.LogWarning(
                             $"Object was found to have no ObjectWrapper assigned! ItemID: {firearm.ItemID}");
-                        //firearmComp.ObjectWrapper = firearm;
+                        firearmComp.ObjectWrapper = firearm;
                         //continue;
                     }
 
