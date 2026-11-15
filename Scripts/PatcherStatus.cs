@@ -22,7 +22,7 @@ namespace MagazinePatcher
 
         public static void AppendCacheLog(string log)
         {
-            PatchLogger.Log("Patching has started", PatchLogger.LogType.General);
+            PatchLogger.Log(log, PatchLogger.LogType.General);
             
             CacheLogList.Add(log);
 

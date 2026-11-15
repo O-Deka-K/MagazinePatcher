@@ -257,7 +257,6 @@ namespace MagazinePatcher
             PatcherStatus.AppendCacheLog("Checking Cache");
 
             bool isCacheValid = LoadFullCache();
-            isCacheValid = false; // TODO remove
 
             CompatibleMagazineCache.BlacklistEntries = GetMagazineCacheBlacklist();
 

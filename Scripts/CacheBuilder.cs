@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using FistVR;
+using OtherLoader.Sledge;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 
@@ -13,37 +14,95 @@ internal static class CacheBuilder
     // This is an arbitrary number. If it ever gets used for an ammo type (modded or not), then change this to something else that's unused.
     private const FireArmRoundType InvalidRoundType = (FireArmRoundType)(-1);
     
-    public static IEnumerable Build(string savePath)
+    private static HashSet<FVRObject> _allMagazines;
+    private static HashSet<FVRObject> _allClips;
+    private static HashSet<FVRObject> _allSpeedloaders;
+    private static HashSet<FVRObject> _allBullets;
+    private static HashSet<FVRObject> _allFirearms;
+    private static HashSet<FVRObject> _allObjects;
+    private static int _allObjectsCount;
+    private static int _cachedObjectsCount;
+    private static HashSet<string> _firearmSkipList;
+    
+    public static IEnumerator Build(string savePath)
     {
         PatchLogger.Log($"[{DateTime.Now:HH:mm:ss}] Caching started!", PatchLogger.LogType.General);
         PatcherStatus.AppendCacheLog("Building new magazine cache -- This may take a while!");
 
         // Create lists of each category of item
-        List<FVRObject> magazines = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine];
-        List<FVRObject> clips = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Clip];
-        List<FVRObject> speedloaders = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.SpeedLoader];
-        List<FVRObject> bullets = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Cartridge];
-        List<FVRObject> firearms = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm];
-        int totalObjects = magazines.Count + clips.Count + bullets.Count + speedloaders.Count + firearms.Count;
-        int progress = 0;
+        _allMagazines = [.. IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine]];
+        _allClips = [.. IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Clip]];
+        _allSpeedloaders = [.. IM.Instance.odicTagCategory[FVRObject.ObjectCategory.SpeedLoader]];
+        _allBullets = [.. IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Cartridge]];
+        _allFirearms = [.. IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm]];
+        _allObjects = [.. _allMagazines, .. _allClips, .. _allSpeedloaders, .. _allBullets, .. _allFirearms];
+        _allObjectsCount = _allObjects.Count;
+        _cachedObjectsCount = 0;
+        _firearmSkipList = [];
+        
+        var ungroupedFvrObjectsSet = new HashSet<FVRObject>();
+        var rootGroups = SledgeRootObjectsResolver.ResolveRootFvrObjectGroups(SledgeSearchMode.All);
+        if (rootGroups == null || rootGroups.Count == 0)
+        {
+            PatcherStatus.AppendCacheLog("Root groups unavailable!");
+            ungroupedFvrObjectsSet.UnionWith(_allObjects);
+        }
+        else
+        {
+            foreach (var group in rootGroups)
+            {
+                var set = new HashSet<FVRObject>(group.AllFvrObjectsInThisGroup);
+                
+                if (!group.IsIsolated)
+                {
+                    ungroupedFvrObjectsSet.UnionWith(set);
+                    continue;
+                }
+                
+                yield return GoThroughSet(set, group.RootBundle.BundleID);
+                foreach (var fvrObject in set)
+                    SledgeUnloader.UnloadFVRObject(fvrObject, true);
+            }
+        }
 
+        yield return GoThroughSet(ungroupedFvrObjectsSet, "Ungrouped FVRObjects");
+        foreach (var fvrObject in ungroupedFvrObjectsSet)
+            SledgeUnloader.UnloadFVRObject(fvrObject, true);
+
+        // Now that all relevant data is saved, we should go back through all entries and add compatible ammo objects
+        BuildCacheEntries();
+
+        // Create the cache file 
+        PatcherStatus.AppendCacheLog("Saving data");
+
+        using StreamWriter sw = File.CreateText(savePath);
+        string cacheString = JsonConvert.SerializeObject(CompatibleMagazineCache.Instance, Formatting.Indented);
+        sw.WriteLine(cacheString);
+        sw.Close();
+
+        PatchLogger.Log($"[{DateTime.Now:HH:mm:ss}] Caching finished!", PatchLogger.LogType.General);
+    }
+
+    private static IEnumerator GoThroughSet(HashSet<FVRObject> set, string setName)
+    {
         // Loop through all magazines and build a list of magazine components
-        PatcherStatus.AppendCacheLog("Loading all magazines");
+        PatcherStatus.AppendCacheLog($"Loading all magazines from {setName}");
 
         DateTime start = DateTime.Now;
 
-        foreach (FVRObject magazine in magazines)
+        foreach (FVRObject magazine in _allMagazines)
         {
+            if (!set.Contains(magazine)) continue;
+            
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
                 start = DateTime.Now;
-                PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
+                PatchLogger.Log($"-- {(int)(((float)_cachedObjectsCount) / _allObjectsCount * 100)}% --", PatchLogger.LogType.General);
             }
 
-            PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-            progress++;
-
             MagazinePatcher.LastTouchedItem = magazine.ItemID;
+            PatcherStatus.UpdateProgress(Mathf.Min((float)_cachedObjectsCount / _allObjectsCount, 0.999f));
+            _cachedObjectsCount++;
 
             // If this magazine isn't cached, then we should store its data
             if (!CompatibleMagazineCache.Instance.Magazines.Contains(magazine.ItemID))
@@ -70,7 +129,6 @@ internal static class CacheBuilder
                     }
 
                     CompatibleMagazineCache.Instance.AddMagazineData(magComp);
-                    OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(magazine.ItemID);
                 }
 
                 CompatibleMagazineCache.Instance.Magazines.Add(magazine.ItemID);
@@ -78,20 +136,21 @@ internal static class CacheBuilder
         }
 
         // Loop through all clips and build a list of stripper clip components
-        PatcherStatus.AppendCacheLog("Loading all clips");
+        PatcherStatus.AppendCacheLog($"Loading all clips from {setName}");
 
-        foreach (FVRObject clip in clips)
+        foreach (FVRObject clip in _allClips)
         {
+            if (!set.Contains(clip)) continue;
+            
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
                 start = DateTime.Now;
-                PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
+                PatchLogger.Log($"-- {(int)(((float)_cachedObjectsCount) / _allObjectsCount * 100)}% --", PatchLogger.LogType.General);
             }
 
-            PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-            progress++;
-
             MagazinePatcher.LastTouchedItem = clip.ItemID;
+            PatcherStatus.UpdateProgress(Mathf.Min((float)_cachedObjectsCount / _allObjectsCount, 0.999f));
+            _cachedObjectsCount++;
 
             // If this clip isn't cached, then we should store its data
             if (!CompatibleMagazineCache.Instance.Clips.Contains(clip.ItemID))
@@ -118,7 +177,6 @@ internal static class CacheBuilder
                     }
 
                     CompatibleMagazineCache.Instance.AddClipData(clipComp);
-                    OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(clip.ItemID);
                 }
 
                 CompatibleMagazineCache.Instance.Clips.Add(clip.ItemID);
@@ -126,20 +184,21 @@ internal static class CacheBuilder
         }
 
         // Loop through all clips and build a list of speedloader components
-        PatcherStatus.AppendCacheLog("Loading all speedloaders");
+        PatcherStatus.AppendCacheLog($"Loading all speedloaders from {setName}");
 
-        foreach (FVRObject speedloader in speedloaders)
+        foreach (FVRObject speedloader in _allSpeedloaders)
         {
+            if (!set.Contains(speedloader)) continue;
+            
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
                 start = DateTime.Now;
-                PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
+                PatchLogger.Log($"-- {(int)(((float)_cachedObjectsCount) / _allObjectsCount * 100)}% --", PatchLogger.LogType.General);
             }
 
-            PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-            progress++;
-
             MagazinePatcher.LastTouchedItem = speedloader.ItemID;
+            PatcherStatus.UpdateProgress(Mathf.Min((float)_cachedObjectsCount / _allObjectsCount, 0.999f));
+            _cachedObjectsCount++;
 
             // If this speedloader isn't cached, then we should store its data
             if (!CompatibleMagazineCache.Instance.SpeedLoaders.Contains(speedloader.ItemID))
@@ -166,7 +225,6 @@ internal static class CacheBuilder
                     }
 
                     CompatibleMagazineCache.Instance.AddSpeedLoaderData(speedloaderComp);
-                    OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(speedloader.ItemID);
                 }
 
                 CompatibleMagazineCache.Instance.SpeedLoaders.Add(speedloader.ItemID);
@@ -174,20 +232,21 @@ internal static class CacheBuilder
         }
 
         // Loop through all bullets and build a list of bullet components
-        PatcherStatus.AppendCacheLog("Loading all bullets");
+        PatcherStatus.AppendCacheLog($"Loading all bullets from {setName}");
 
-        foreach (FVRObject bullet in bullets)
+        foreach (FVRObject bullet in _allBullets)
         {
+            if (!set.Contains(bullet)) continue;
+            
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
                 start = DateTime.Now;
-                PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
+                PatchLogger.Log($"-- {(int)(((float)_cachedObjectsCount) / _allObjectsCount * 100)}% --", PatchLogger.LogType.General);
             }
 
-            PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-            progress++;
-
             MagazinePatcher.LastTouchedItem = bullet.ItemID;
+            PatcherStatus.UpdateProgress(Mathf.Min((float)_cachedObjectsCount / _allObjectsCount, 0.999f));
+            _cachedObjectsCount++;
 
             // If this bullet isn't cached, then we should store its data
             if (!CompatibleMagazineCache.Instance.Bullets.Contains(bullet.ItemID))
@@ -214,7 +273,6 @@ internal static class CacheBuilder
                     }
 
                     CompatibleMagazineCache.Instance.AddBulletData(bulletComp);
-                    OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(bullet.ItemID);
                 }
 
                 CompatibleMagazineCache.Instance.Bullets.Add(bullet.ItemID);
@@ -222,26 +280,26 @@ internal static class CacheBuilder
         }
 
         // Load all firearms into the cache
-        PatcherStatus.AppendCacheLog("Loading all firearms");
-        List<string> skipList = [];
+        PatcherStatus.AppendCacheLog($"Loading all firearms from {setName}");
 
-        foreach (FVRObject firearm in firearms)
+        foreach (FVRObject firearm in _allFirearms)
         {
+            if (!set.Contains(firearm)) continue;
+            
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
                 start = DateTime.Now;
-                PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
+                PatchLogger.Log($"-- {(int)(((float)_cachedObjectsCount) / _allObjectsCount * 100)}% --", PatchLogger.LogType.General);
             }
 
-            PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-            progress++;
-
             MagazinePatcher.LastTouchedItem = firearm.ItemID;
+            PatcherStatus.UpdateProgress(Mathf.Min((float)_cachedObjectsCount / _allObjectsCount, 0.999f));
+            _cachedObjectsCount++;
 
             // Some muzzle loaded vanilla guns should be skipped
             if (!firearm.IsModContent && firearm.TagFirearmAction == FVRObject.OTagFirearmAction.OpenBreach &&
                 firearm.TagFirearmFeedOption.Contains(FVRObject.OTagFirearmFeedOption.BreachLoad))
-                skipList.Add(firearm.ItemID);
+                _firearmSkipList.Add(firearm.ItemID);
 
             // If this firearm isn't cached, then we should store its data
             if (!CompatibleMagazineCache.Instance.Firearms.Contains(firearm.ItemID))
@@ -301,14 +359,15 @@ internal static class CacheBuilder
                     }
 
                     CompatibleMagazineCache.Instance.Entries.Add(firearm.ItemID, entry);
-                    OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(firearm.ItemID);
                 }
 
                 CompatibleMagazineCache.Instance.Firearms.Add(firearm.ItemID);
             }
         }
+    }
 
-        // Now that all relevant data is saved, we should go back through all entries and add compatible ammo objects
+    private static void BuildCacheEntries()
+    {
         PatcherStatus.AppendCacheLog("Building cache entries");
 
         foreach (MagazineCacheEntry entry in CompatibleMagazineCache.Instance.Entries.Values)
@@ -316,7 +375,7 @@ internal static class CacheBuilder
             if (!IM.OD.ContainsKey(entry.FirearmID))
                 continue;
 
-            if (skipList.Contains(entry.FirearmID))
+            if (_firearmSkipList.Contains(entry.FirearmID))
                 continue;
 
             MagazinePatcher.LastTouchedItem = entry.FirearmID;
@@ -361,15 +420,5 @@ internal static class CacheBuilder
                 }
             }
         }
-
-        // Create the cache file 
-        PatcherStatus.AppendCacheLog("Saving data");
-
-        using StreamWriter sw = File.CreateText(savePath);
-        string cacheString = JsonConvert.SerializeObject(CompatibleMagazineCache.Instance, Formatting.Indented);
-        sw.WriteLine(cacheString);
-        sw.Close();
-
-        PatchLogger.Log($"[{DateTime.Now:HH:mm:ss}] Caching finished!", PatchLogger.LogType.General);
     }
 }
