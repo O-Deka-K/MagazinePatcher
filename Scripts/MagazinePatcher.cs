@@ -8,30 +8,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using UnityEngine;
 using Valve.Newtonsoft.Json;
 
 namespace MagazinePatcher
 {
     [BepInPlugin("h3vr.magazinepatcher", "MagazinePatcher", "0.3.3")]
-    [BepInDependency("h3vr.otherloader", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("h3vr.otherloader", BepInDependency.DependencyFlags.HardDependency)] // TODO add version
     [BepInDependency("nrgill28.Sodalite", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
     public class MagazinePatcher : StratumPlugin
     {
-        private static ConfigEntry<bool> ResetBasicCacheOnNextStart;
-        private static ConfigEntry<bool> ResetXLCacheOnNextStart;
-        private static ConfigEntry<bool> DeleteCacheOnNextStart;
-        private static ConfigEntry<bool> EnableLogging;
-        private static ConfigEntry<bool> LogDebugInfo;
-        private static string FullCachePath;
-        private static string BlacklistPath;
-        private static string BasicCachePath;
-        private static string XLCachePath;
-        private static string LastTouchedItem;
-
-        // This is an arbitrary number. If it ever gets used for an ammo type (modded or not), then change this to something else that's unused.
-        private static readonly FireArmRoundType InvalidRoundType = (FireArmRoundType)(-1);
+        private static ConfigEntry<bool> _resetBasicCacheOnNextStart;
+        private static ConfigEntry<bool> _resetXlCacheOnNextStart;
+        private static ConfigEntry<bool> _deleteCacheOnNextStart;
+        private static ConfigEntry<bool> _enableLogging;
+        private static ConfigEntry<bool> _logDebugInfo;
+        private static string _fullCachePath;
+        private static string _blacklistPath;
+        private static string _basicCachePath;
+        private static string _xlCachePath;
+        internal static string LastTouchedItem;
 
         private void Awake()
         {
@@ -44,84 +40,84 @@ namespace MagazinePatcher
         {
             string cachePath = Path.Combine(BepInEx.Paths.CachePath, "MagazinePatcher");
 
-            FullCachePath = Path.Combine(cachePath, "CachedCompatibleMags.json");
-            PatchLogger.Log($"Full cache path: {FullCachePath}", PatchLogger.LogType.Debug);
+            _fullCachePath = Path.Combine(cachePath, "CachedCompatibleMags.json");
+            PatchLogger.Log($"Full cache path: {_fullCachePath}", PatchLogger.LogType.Debug);
 
             DirectoryInfo dirInfo = new(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
             Stratum.PluginDirectories dirs = new(dirInfo);
 
-            BlacklistPath = Path.Combine(dirs.Data.FullName, "MagazineCacheBlacklist.json");
-            PatchLogger.Log($"Blacklist path: {BlacklistPath}", PatchLogger.LogType.Debug);
+            _blacklistPath = Path.Combine(dirs.Data.FullName, "MagazineCacheBlacklist.json");
+            PatchLogger.Log($"Blacklist path: {_blacklistPath}", PatchLogger.LogType.Debug);
 
             string backupPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "backup");
 
-            BasicCachePath = Path.Combine(backupPath, "CachedCompatibleMags-Basic.json");
-            PatchLogger.Log($"Backup cache path: {BasicCachePath}", PatchLogger.LogType.Debug);
+            _basicCachePath = Path.Combine(backupPath, "CachedCompatibleMags-Basic.json");
+            PatchLogger.Log($"Backup cache path: {_basicCachePath}", PatchLogger.LogType.Debug);
 
-            XLCachePath = Path.Combine(backupPath, "CachedCompatibleMags-XL.json");
-            PatchLogger.Log($"Backup cache path: {BasicCachePath}", PatchLogger.LogType.Debug);
+            _xlCachePath = Path.Combine(backupPath, "CachedCompatibleMags-XL.json");
+            PatchLogger.Log($"Backup cache path: {_basicCachePath}", PatchLogger.LogType.Debug);
         }
 
         private void LoadConfigFile()
         {
             PatchLogger.Log("Getting config file", PatchLogger.LogType.General);
 
-            ResetBasicCacheOnNextStart = Config.Bind("General",
+            _resetBasicCacheOnNextStart = Config.Bind("General",
                 "Reset to Basic Cache on Next Start",
                 false,
                 "If true, resets the cache from a basic starting cache on the next start of H3VR. MagazinePatcher will then cache any items that are missing from it. This setting will always be set back to false after startup.");
 
-            ResetXLCacheOnNextStart = Config.Bind("General",
+            _resetXlCacheOnNextStart = Config.Bind("General",
                 "Reset to XL Cache on Next Start",
                 false,
                 "Experimental. If true, resets the cache from the XL starting cache on the next start of H3VR. This is a large cache made from many available mods. This setting will always be set back to false after startup.");
 
-            DeleteCacheOnNextStart = Config.Bind("General",
+            _deleteCacheOnNextStart = Config.Bind("General",
                 "Delete Cache on Next Start",
                 false,
                 "Nuclear option. If true, deletes the cache on the next start of H3VR. The cache will be built from scratch. This takes the most time and the most RAM to finish. This setting will always be set back to false after startup.");
 
-            EnableLogging = Config.Bind("Debug",
+            _enableLogging = Config.Bind("Debug",
                 "EnableLogging",
                 true,
                 "Set to true to enable logging");
 
-            LogDebugInfo = Config.Bind("Debug",
+            _logDebugInfo = Config.Bind("Debug",
                 "LogDebugInfo",
                 false,
                 "If true, logs extra debugging info");
 
             Config.SettingChanged += ConfigSettingChanged;
 
-            PatchLogger.AllowLogging = EnableLogging.Value;
-            PatchLogger.LogDebug = LogDebugInfo.Value;
+            PatchLogger.AllowLogging = _enableLogging.Value;
+            PatchLogger.LogDebug = _logDebugInfo.Value;
         }
 
         private void ConfigSettingChanged(object sender, SettingChangedEventArgs e)
         {
             // Only one of these can be active at a time
-            if (e.ChangedSetting == ResetBasicCacheOnNextStart)
+            if (e.ChangedSetting == _resetBasicCacheOnNextStart)
             {
-                if (ResetBasicCacheOnNextStart.Value)
+                if (_resetBasicCacheOnNextStart.Value)
                 {
-                    ResetXLCacheOnNextStart.Value = false;
-                    DeleteCacheOnNextStart.Value = false;
+                    _resetXlCacheOnNextStart.Value = false;
+                    _deleteCacheOnNextStart.Value = false;
                 }
             }
-            else if (e.ChangedSetting == ResetXLCacheOnNextStart)
+            else if (e.ChangedSetting == _resetXlCacheOnNextStart)
             {
-                if (ResetXLCacheOnNextStart.Value)
+                if (_resetXlCacheOnNextStart.Value)
                 {
-                    ResetBasicCacheOnNextStart.Value = false;
-                    DeleteCacheOnNextStart.Value = false;
+                    _resetBasicCacheOnNextStart.Value = false;
+                    _deleteCacheOnNextStart.Value = false;
                 }
             }
-            else if (e.ChangedSetting == DeleteCacheOnNextStart)
+            else if (e.ChangedSetting == _deleteCacheOnNextStart)
             {
-                if (DeleteCacheOnNextStart.Value)
+                if (_deleteCacheOnNextStart.Value)
                 {
-                    ResetBasicCacheOnNextStart.Value = false;
-                    ResetXLCacheOnNextStart.Value = false;
+                    _resetBasicCacheOnNextStart.Value = false;
+                    _resetXlCacheOnNextStart.Value = false;
                 }
             }
         }
@@ -153,14 +149,14 @@ namespace MagazinePatcher
             try
             {
                 // If the magazine blacklist file does not exist, log an errpr
-                if (string.IsNullOrEmpty(BlacklistPath) || !File.Exists(BlacklistPath))
+                if (string.IsNullOrEmpty(_blacklistPath) || !File.Exists(_blacklistPath))
                 {
                     PatchLogger.LogError("Failed to load magazine blacklist! Creating new one!");
                     return CreateNewBlacklist();
                 }
 
                 // Read the blacklist
-                string blacklistString = File.ReadAllText(BlacklistPath);
+                string blacklistString = File.ReadAllText(_blacklistPath);
 
                 // If the blacklist file is empty, create a new one
                 if (string.IsNullOrEmpty(blacklistString))
@@ -194,7 +190,7 @@ namespace MagazinePatcher
             PatchLogger.Log("Blacklist does not exist! Building new one", PatchLogger.LogType.General);
             Dictionary<string, MagazineBlacklistEntry> blacklist = [];
 
-            StreamWriter sw = File.CreateText(BlacklistPath);
+            StreamWriter sw = File.CreateText(_blacklistPath);
             List<MagazineBlacklistEntry> blacklistEntry = [];
 
             MagazineBlacklistEntry sample = new()
@@ -231,7 +227,7 @@ namespace MagazinePatcher
 
         private static IEnumerator LoadMagazineCacheAsync()
         {
-            PatchLogger.Log("Patching has started", PatchLogger.LogType.General);
+            PatcherStatus.AppendCacheLog("Patching has started");
 
             bool canCache = false;
             bool isOtherloaderLoaded = false;
@@ -268,360 +264,10 @@ namespace MagazinePatcher
             // If the magazine cache file didn't exist, or wasn't valid, we must build a new one
             if (!isCacheValid)
             {
-                PatchLogger.Log($"[{DateTime.Now:HH:mm:ss}] Caching started!", PatchLogger.LogType.General);
-                PatchLogger.Log("Building new magazine cache -- This may take a while!", PatchLogger.LogType.General);
-                PatcherStatus.AppendCacheLog("Caching Started -- This may take a while!");
-
-                // Create lists of each category of item
-                List<FVRObject> magazines = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine];
-                List<FVRObject> clips = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Clip];
-                List<FVRObject> speedloaders = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.SpeedLoader];
-                List<FVRObject> bullets = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Cartridge];
-                List<FVRObject> firearms = IM.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm];
-                int totalObjects = magazines.Count + clips.Count + bullets.Count + speedloaders.Count + firearms.Count;
-                int progress = 0;
-
-                // Loop through all magazines and build a list of magazine components
-                PatchLogger.Log("Loading all magazines", PatchLogger.LogType.General);
-                PatcherStatus.AppendCacheLog("Caching Magazines");
-
-                DateTime start = DateTime.Now;
-
-                foreach (FVRObject magazine in magazines)
-                {
-                    if ((DateTime.Now - start).TotalSeconds > 2)
-                    {
-                        start = DateTime.Now;
-                        PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
-                    }
-
-                    PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-                    progress++;
-
-                    LastTouchedItem = magazine.ItemID;
-
-                    // If this magazine isn't cached, then we should store its data
-                    if (!CompatibleMagazineCache.Instance.Magazines.Contains(magazine.ItemID))
-                    {
-                        var gameObjectCallback = magazine.GetGameObjectAsync()!;
-                        yield return gameObjectCallback;
-
-                        var result = gameObjectCallback.Result;
-                        if (result == null)
-                        {
-                            PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {magazine.ItemID}");
-                            continue;
-                        }
-
-                        var magComp = result.GetComponent<FVRFireArmMagazine>();
-                        if (magComp != null)
-                        {
-                            if (magComp.ObjectWrapper == null)
-                            {
-                                PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {magazine.ItemID}");
-                                //magComp.ObjectWrapper = magazine;
-                                //continue;
-                            }
-
-                            CompatibleMagazineCache.Instance.AddMagazineData(magComp);
-                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(magazine.ItemID);
-                        }
-
-                        CompatibleMagazineCache.Instance.Magazines.Add(magazine.ItemID);
-                    }
-                }
-
-                // Loop through all clips and build a list of stripper clip components
-                PatchLogger.Log("Loading all clips", PatchLogger.LogType.General);
-                PatcherStatus.AppendCacheLog("Caching Clips");
-
-                foreach (FVRObject clip in clips)
-                {
-                    if ((DateTime.Now - start).TotalSeconds > 2)
-                    {
-                        start = DateTime.Now;
-                        PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
-                    }
-
-                    PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-                    progress++;
-
-                    LastTouchedItem = clip.ItemID;
-
-                    // If this clip isn't cached, then we should store its data
-                    if (!CompatibleMagazineCache.Instance.Clips.Contains(clip.ItemID))
-                    {
-                        var gameObjectCallback = clip.GetGameObjectAsync()!;
-                        yield return gameObjectCallback;
-
-                        var result = gameObjectCallback.Result;
-                        if (result == null)
-                        {
-                            PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {clip.ItemID}");
-                            continue;
-                        }
-
-                        var clipComp = result.GetComponent<FVRFireArmClip>();
-                        if (clipComp != null)
-                        {
-                            if (clipComp.ObjectWrapper == null)
-                            {
-                                PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {clip.ItemID}");
-                                //clipComp.ObjectWrapper = clip;
-                                //continue;
-                            }
-
-                            CompatibleMagazineCache.Instance.AddClipData(clipComp);
-                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(clip.ItemID);
-                        }
-
-                        CompatibleMagazineCache.Instance.Clips.Add(clip.ItemID);
-                    }
-                }
-
-                // Loop through all clips and build a list of speedloader components
-                PatchLogger.Log("Loading all speedloaders", PatchLogger.LogType.General);
-                PatcherStatus.AppendCacheLog("Caching Speedloaders");
-
-                foreach (FVRObject speedloader in speedloaders)
-                {
-                    if ((DateTime.Now - start).TotalSeconds > 2)
-                    {
-                        start = DateTime.Now;
-                        PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
-                    }
-
-                    PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-                    progress++;
-
-                    LastTouchedItem = speedloader.ItemID;
-
-                    // If this speedloader isn't cached, then we should store its data
-                    if (!CompatibleMagazineCache.Instance.SpeedLoaders.Contains(speedloader.ItemID))
-                    {
-                        var gameObjectCallback = speedloader.GetGameObjectAsync()!;
-                        yield return gameObjectCallback;
-
-                        var result = gameObjectCallback.Result;
-                        if (result == null)
-                        {
-                            PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {speedloader.ItemID}");
-                            continue;
-                        }
-
-                        var speedloaderComp = result.GetComponent<Speedloader>();
-                        if (speedloaderComp != null)
-                        {
-                            if (speedloaderComp.ObjectWrapper == null)
-                            {
-                                PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {speedloader.ItemID}");
-                                //speedloaderComp.ObjectWrapper = speedloader;
-                                //continue;
-                            }
-
-                            CompatibleMagazineCache.Instance.AddSpeedLoaderData(speedloaderComp);
-                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(speedloader.ItemID);
-                        }
-
-                        CompatibleMagazineCache.Instance.SpeedLoaders.Add(speedloader.ItemID);
-                    }
-                }
-
-                // Loop through all bullets and build a list of bullet components
-                PatchLogger.Log("Loading all bullets", PatchLogger.LogType.General);
-                PatcherStatus.AppendCacheLog("Caching Bullets");
-
-                foreach (FVRObject bullet in bullets)
-                {
-                    if ((DateTime.Now - start).TotalSeconds > 2)
-                    {
-                        start = DateTime.Now;
-                        PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
-                    }
-
-                    PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-                    progress++;
-
-                    LastTouchedItem = bullet.ItemID;
-
-                    // If this bullet isn't cached, then we should store its data
-                    if (!CompatibleMagazineCache.Instance.Bullets.Contains(bullet.ItemID))
-                    {
-                        var gameObjectCallback = bullet.GetGameObjectAsync()!;
-                        yield return gameObjectCallback;
-
-                        var result = gameObjectCallback.Result;
-                        if (result == null)
-                        {
-                            PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {bullet.ItemID}");
-                            continue;
-                        }
-
-                        var bulletComp = result.GetComponent<FVRFireArmRound>();
-                        if (bulletComp != null)
-                        {
-                            if (bulletComp.ObjectWrapper == null)
-                            {
-                                PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {bullet.ItemID}");
-                                //bulletComp.ObjectWrapper = bullet;
-                                //continue;
-                            }
-
-                            CompatibleMagazineCache.Instance.AddBulletData(bulletComp);
-                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(bullet.ItemID);
-                        }
-
-                        CompatibleMagazineCache.Instance.Bullets.Add(bullet.ItemID);
-                    }
-                }
-
-                // Load all firearms into the cache
-                PatchLogger.Log("Loading all firearms", PatchLogger.LogType.General);
-                PatcherStatus.AppendCacheLog("Caching Firearms");
-                List<string> skipList = [];
-
-                foreach (FVRObject firearm in firearms)
-                {
-                    if ((DateTime.Now - start).TotalSeconds > 2)
-                    {
-                        start = DateTime.Now;
-                        PatchLogger.Log($"-- {(int)(((float)progress) / totalObjects * 100)}% --", PatchLogger.LogType.General);
-                    }
-
-                    PatcherStatus.UpdateProgress(Mathf.Min((float)progress / totalObjects, 0.999f));
-                    progress++;
-
-                    LastTouchedItem = firearm.ItemID;
-
-                    // Some muzzle loaded vanilla guns should be skipped
-                    if (!firearm.IsModContent && firearm.TagFirearmAction == FVRObject.OTagFirearmAction.OpenBreach && firearm.TagFirearmFeedOption.Contains(FVRObject.OTagFirearmFeedOption.BreachLoad))
-                        skipList.Add(firearm.ItemID);
-
-                    // If this firearm isn't cached, then we should store its data
-                    if (!CompatibleMagazineCache.Instance.Firearms.Contains(firearm.ItemID))
-                    {
-                        if (!IM.OD.ContainsKey(firearm.ItemID))
-                        {
-                            PatchLogger.LogWarning($"Item not found in Object Dictionary! ItemID: {firearm.ItemID}");
-                            continue;
-                        }
-
-                        var gameObjectCallback = firearm.GetGameObjectAsync()!;
-                        yield return gameObjectCallback;
-
-                        var result = gameObjectCallback.Result;
-                        if (result == null)
-                        {
-                            PatchLogger.LogWarning($"No object was found to use FVRObject! ItemID: {firearm.ItemID}");
-                            continue;
-                        }
-
-                        // If this firearm is valid, then we create a magazine cache entry for it
-                        var firearmComp = result.GetComponent<FVRFireArm>();
-                        if (firearmComp != null)
-                        {
-                            if (firearmComp.ObjectWrapper == null)
-                            {
-                                PatchLogger.LogWarning($"Object was found to have no ObjectWrapper assigned! ItemID: {firearm.ItemID}");
-                                //firearmComp.ObjectWrapper = firearm;
-                                //continue;
-                            }
-
-                            MagazineCacheEntry entry = new()
-                            {
-                                FirearmID = firearm.ItemID,
-                                MagType = firearmComp.MagazineType,
-                                ClipType = firearmComp.ClipType,
-                                BulletType = firearmComp.RoundType
-                            };
-
-                            // If it's mostly zeroes, set the round type to invalid, otherwise stuff like the Graviton Beamer gets .22LR ammo.
-                            // Unfortunately, Anton didn't create a "FireArmRoundType.None", so we have to make one up.
-                            if (!ValidFireArm(firearmComp.RoundType, firearmComp.ClipType, firearmComp.MagazineType, firearm.MagazineCapacity))
-                            {
-                                PatchLogger.Log($"Firearm {firearm.DisplayName} being set to round type {InvalidRoundType}!", PatchLogger.LogType.Debug);
-                                entry.BulletType = InvalidRoundType;
-                            }
-
-                            // Extra part that handles revolver capacity for speedloader compatibility
-                            Revolver revolverComp = firearmComp.gameObject.GetComponent<Revolver>();
-                            if (revolverComp != null)
-                            {
-                                entry.DoesUseSpeedloader = true;
-                                IM.OD[entry.FirearmID].MagazineCapacity = revolverComp.Chambers.Length;
-                            }
-
-                            CompatibleMagazineCache.Instance.Entries.Add(firearm.ItemID, entry);
-                            OtherLoader.Sledge.SledgeUnloader.UnloadFVRObject(firearm.ItemID);
-                        }
-
-                        CompatibleMagazineCache.Instance.Firearms.Add(firearm.ItemID);
-                    }
-                }
-
-                // Now that all relevant data is saved, we should go back through all entries and add compatible ammo objects
-                PatchLogger.Log("Building Cache Entries", PatchLogger.LogType.General);
-                PatcherStatus.AppendCacheLog("Building Cache");
-
-                foreach (MagazineCacheEntry entry in CompatibleMagazineCache.Instance.Entries.Values)
-                {
-                    if (!IM.OD.ContainsKey(entry.FirearmID))
-                        continue;
-
-                    if (skipList.Contains(entry.FirearmID))
-                        continue;
-
-                    LastTouchedItem = entry.FirearmID;
-
-                    if (entry.MagType != FireArmMagazineType.mNone && CompatibleMagazineCache.Instance.MagazineData.ContainsKey(entry.MagType))
-                    {
-                        foreach (AmmoObjectDataTemplate magazine in CompatibleMagazineCache.Instance.MagazineData[entry.MagType])
-                        {
-                            entry.CompatibleMagazines.Add(magazine.ObjectID);
-                        }
-                    }
-
-                    if (entry.ClipType != FireArmClipType.None && CompatibleMagazineCache.Instance.ClipData.ContainsKey(entry.ClipType))
-                    {
-                        foreach (AmmoObjectDataTemplate clip in CompatibleMagazineCache.Instance.ClipData[entry.ClipType])
-                        {
-                            entry.CompatibleClips.Add(clip.ObjectID);
-                        }
-                    }
-
-                    if (entry.DoesUseSpeedloader && CompatibleMagazineCache.Instance.SpeedLoaderData.ContainsKey(entry.BulletType))
-                    {
-                        foreach (AmmoObjectDataTemplate speedloader in CompatibleMagazineCache.Instance.SpeedLoaderData[entry.BulletType])
-                        {
-                            if (IM.OD[entry.FirearmID].MagazineCapacity == speedloader.Capacity)
-                            {
-                                entry.CompatibleSpeedLoaders.Add(speedloader.ObjectID);
-                            }
-                        }
-                    }
-
-                    if (CompatibleMagazineCache.Instance.BulletData.ContainsKey(entry.BulletType))
-                    {
-                        foreach (AmmoObjectDataTemplate bullet in CompatibleMagazineCache.Instance.BulletData[entry.BulletType])
-                        {
-                            entry.CompatibleBullets.Add(bullet.ObjectID);
-                        }
-                    }
-                }
-
-                // Create the cache file 
-                PatchLogger.Log("Saving Data", PatchLogger.LogType.General);
-                PatcherStatus.AppendCacheLog("Saving");
-
-                using StreamWriter sw = File.CreateText(FullCachePath);
-                string cacheString = JsonConvert.SerializeObject(CompatibleMagazineCache.Instance, Formatting.Indented);
-                sw.WriteLine(cacheString);
-                sw.Close();
-
-                PatchLogger.Log($"[{DateTime.Now:HH:mm:ss}] Caching finished!", PatchLogger.LogType.General);
+                yield return CacheBuilder.Build(_fullCachePath);
             }
 
-            PatchLogger.Log("Applying magazine cache to firearms...", PatchLogger.LogType.General);
+            PatchLogger.Log("Applying magazine cache to firearms", PatchLogger.LogType.General);
 
             ApplyMagazineCache(CompatibleMagazineCache.Instance);
             RemoveBlacklistedMagazines(CompatibleMagazineCache.BlacklistEntries);
@@ -633,25 +279,25 @@ namespace MagazinePatcher
         private static bool CheckBackupCache()
         {
             // Only one of these can be set at once
-            bool forceRestoreBasic = ResetBasicCacheOnNextStart.Value;
-            bool forceRestoreXL = !forceRestoreBasic && ResetXLCacheOnNextStart.Value;
-            bool forceDelete = !forceRestoreBasic && !forceRestoreXL && DeleteCacheOnNextStart.Value;
+            bool forceRestoreBasic = _resetBasicCacheOnNextStart.Value;
+            bool forceRestoreXL = !forceRestoreBasic && _resetXlCacheOnNextStart.Value;
+            bool forceDelete = !forceRestoreBasic && !forceRestoreXL && _deleteCacheOnNextStart.Value;
 
             // Always reset these options, whether we do them or not
-            ResetBasicCacheOnNextStart.Value = false;
-            ResetXLCacheOnNextStart.Value = false;
-            DeleteCacheOnNextStart.Value = false;
+            _resetBasicCacheOnNextStart.Value = false;
+            _resetXlCacheOnNextStart.Value = false;
+            _deleteCacheOnNextStart.Value = false;
 
             if (forceDelete)
             {
                 PatchLogger.Log($"Deleted cache and starting from scratch!", PatchLogger.LogType.General);
-                if (File.Exists(FullCachePath))
-                    File.Delete(FullCachePath);
+                if (File.Exists(_fullCachePath))
+                    File.Delete(_fullCachePath);
 
                 return true;
             }
 
-            string startingCachePath = (forceRestoreXL ? XLCachePath : BasicCachePath);
+            string startingCachePath = (forceRestoreXL ? _xlCachePath : _basicCachePath);
 
             // If starting cache doesn't exist, we can't do anything
             if (!File.Exists(startingCachePath))
@@ -661,9 +307,9 @@ namespace MagazinePatcher
             }
 
             // If Full cache doesn't exist, or if Reset option has been set, copy starting cache to Full cache
-            if (!File.Exists(FullCachePath) || forceRestoreBasic || forceRestoreXL)
+            if (!File.Exists(_fullCachePath) || forceRestoreBasic || forceRestoreXL)
             {
-                File.Copy(startingCachePath, FullCachePath, true);
+                File.Copy(startingCachePath, _fullCachePath, true);
                 PatchLogger.Log($"Starting cache restored from {startingCachePath}!", PatchLogger.LogType.General);
                 return true;
             }
@@ -678,11 +324,11 @@ namespace MagazinePatcher
             CheckBackupCache();
 
             // If the cache exists, we load it and check it's validity
-            if (!string.IsNullOrEmpty(FullCachePath) && File.Exists(FullCachePath))
+            if (!string.IsNullOrEmpty(_fullCachePath) && File.Exists(_fullCachePath))
             {
                 try
                 {
-                    string cacheJson = File.ReadAllText(FullCachePath);
+                    string cacheJson = File.ReadAllText(_fullCachePath);
                     CompatibleMagazineCache cache = JsonConvert.DeserializeObject<CompatibleMagazineCache>(cacheJson);
                     CompatibleMagazineCache.Instance = cache;
 
@@ -698,7 +344,7 @@ namespace MagazinePatcher
                     PatchLogger.LogError("Failed to read cache file!");
                     PatchLogger.LogError(e.ToString());
 
-                    File.Delete(FullCachePath);
+                    File.Delete(_fullCachePath);
                 }
             }
             else
