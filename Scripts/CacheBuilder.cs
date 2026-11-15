@@ -65,7 +65,7 @@ internal static class CacheBuilder
             }
         }
 
-        var remainingUngroupedFvrObjects = _allObjects;
+        HashSet<FVRObject> remainingUngroupedFvrObjects = [.._allObjects];
         remainingUngroupedFvrObjects.ExceptWith(cachedFvrObjects);
 
         yield return GoThroughSet(remainingUngroupedFvrObjects, "Ungrouped FVRObjects");
@@ -93,9 +93,9 @@ internal static class CacheBuilder
 
         DateTime start = DateTime.Now;
 
-        foreach (FVRObject magazine in _allMagazines)
+        foreach (FVRObject magazine in set)
         {
-            if (!set.Contains(magazine)) continue;
+            if (!_allMagazines.Contains(magazine)) continue;
             
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
@@ -141,9 +141,9 @@ internal static class CacheBuilder
         // Loop through all clips and build a list of stripper clip components
         PatcherStatus.AppendCacheLog($"Loading all clips from {setName}");
 
-        foreach (FVRObject clip in _allClips)
+        foreach (FVRObject clip in set)
         {
-            if (!set.Contains(clip)) continue;
+            if (!_allClips.Contains(clip)) continue;
             
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
@@ -189,9 +189,9 @@ internal static class CacheBuilder
         // Loop through all clips and build a list of speedloader components
         PatcherStatus.AppendCacheLog($"Loading all speedloaders from {setName}");
 
-        foreach (FVRObject speedloader in _allSpeedloaders)
+        foreach (FVRObject speedloader in set)
         {
-            if (!set.Contains(speedloader)) continue;
+            if (!_allSpeedloaders.Contains(speedloader)) continue;
             
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
@@ -237,9 +237,9 @@ internal static class CacheBuilder
         // Loop through all bullets and build a list of bullet components
         PatcherStatus.AppendCacheLog($"Loading all bullets from {setName}");
 
-        foreach (FVRObject bullet in _allBullets)
+        foreach (FVRObject bullet in set)
         {
-            if (!set.Contains(bullet)) continue;
+            if (!_allBullets.Contains(bullet)) continue;
             
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
@@ -285,9 +285,9 @@ internal static class CacheBuilder
         // Load all firearms into the cache
         PatcherStatus.AppendCacheLog($"Loading all firearms from {setName}");
 
-        foreach (FVRObject firearm in _allFirearms)
+        foreach (FVRObject firearm in set)
         {
-            if (!set.Contains(firearm)) continue;
+            if (!_allFirearms.Contains(firearm)) continue;
             
             if ((DateTime.Now - start).TotalSeconds > 2)
             {
