@@ -40,33 +40,36 @@ internal static class CacheBuilder
         _cachedObjectsCount = 0;
         _firearmSkipList = [];
         
-        var ungroupedFvrObjectsSet = new HashSet<FVRObject>();
+        var cachedFvrObjects = new HashSet<FVRObject>();
+        // TODO update Sledge API
         var rootGroups = SledgeRootObjectsResolver.ResolveRootFvrObjectGroups(SledgeSearchMode.All);
         if (rootGroups == null || rootGroups.Count == 0)
         {
             PatcherStatus.AppendCacheLog("Root groups unavailable!");
-            ungroupedFvrObjectsSet.UnionWith(_allObjects);
         }
         else
         {
             foreach (var group in rootGroups)
             {
-                var set = new HashSet<FVRObject>(group.AllFvrObjectsInThisGroup);
-                
+                // Groups that aren't isolated should be cached at the end just to be safe
                 if (!group.IsIsolated)
-                {
-                    ungroupedFvrObjectsSet.UnionWith(set);
                     continue;
-                }
                 
+                var set = new HashSet<FVRObject>(group.AllFvrObjectsInThisGroup);
                 yield return GoThroughSet(set, group.RootBundle.BundleID);
                 foreach (var fvrObject in set)
+                {
+                    cachedFvrObjects.Add(fvrObject);
                     SledgeUnloader.UnloadFVRObject(fvrObject, true);
+                }
             }
         }
 
-        yield return GoThroughSet(ungroupedFvrObjectsSet, "Ungrouped FVRObjects");
-        foreach (var fvrObject in ungroupedFvrObjectsSet)
+        var remainingUngroupedFvrObjects = _allObjects;
+        remainingUngroupedFvrObjects.ExceptWith(cachedFvrObjects);
+
+        yield return GoThroughSet(remainingUngroupedFvrObjects, "Ungrouped FVRObjects");
+        foreach (var fvrObject in remainingUngroupedFvrObjects)
             SledgeUnloader.UnloadFVRObject(fvrObject, true);
 
         // Now that all relevant data is saved, we should go back through all entries and add compatible ammo objects
