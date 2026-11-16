@@ -62,7 +62,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="OtherLoader">
-      <HintPath>$(ProfileString)\devyndamonster-OtherLoader\OtherLoader.dll</HintPath>
+      <HintPath>libs\OtherLoader.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Stratum, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -90,6 +90,7 @@
     <Compile Include="Scripts\CompatibleMagazineCache.cs" />
     <Compile Include="Scripts\Logger.cs" />
     <Compile Include="Scripts\MagazinePatcher.cs" />
+    <Compile Include="Scripts\CacheBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scripts\PatcherStatus.cs" />
   </ItemGroup>
