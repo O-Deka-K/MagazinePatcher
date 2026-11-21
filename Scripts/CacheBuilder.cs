@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using FistVR;
-using OtherLoader.Sledge;
+using OtherLoader.API.Sledge;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 
@@ -41,7 +41,6 @@ internal static class CacheBuilder
         _firearmSkipList = [];
         
         var cachedFvrObjects = new HashSet<FVRObject>();
-        // TODO update Sledge API
         var rootGroups = SledgeRootObjectsResolver.ResolveRootFvrObjectGroups(SledgeSearchMode.All);
         if (rootGroups == null || rootGroups.Count == 0)
         {
