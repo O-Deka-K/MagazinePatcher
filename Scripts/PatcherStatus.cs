@@ -22,6 +22,8 @@ namespace MagazinePatcher
 
         public static void AppendCacheLog(string log)
         {
+            PatchLogger.Log(log, PatchLogger.LogType.General);
+            
             CacheLogList.Add(log);
 
             if (CacheLogList.Count > 6)
